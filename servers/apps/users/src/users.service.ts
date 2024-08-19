@@ -7,6 +7,8 @@ import { Response } from 'express';
 
 import * as bcrypt from 'bcrypt';
 import { EmailService } from './email/email.service';
+import { TokenSender } from './utils/send_token';
+import { User } from '@prisma/client';
 
 interface UserData {
   name: string;
@@ -129,15 +131,36 @@ export class UsersService {
 
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
-    const user = {
-      email,
-      password,
-    };
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
 
-    return user;
+    if (user && (await this.comparePassword(password, user.password))) {
+      const tokenSender = new TokenSender(this.configService, this.jwtService);
+      return tokenSender.sendToken(user);
+    } else {
+      return {
+        user: null,
+        accessToken: null,
+        refreshToken: null,
+        error: {
+          message: 'Invalid email or password',
+        },
+      };
+    }
+  }
+
+  // compare with hashed password
+  async comparePassword(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    return bcrypt.compare(plainPassword, hashedPassword);
   }
 
   async getUsers() {
-    return this.prisma.user.findMany();
+    return this.prisma.user.findMany({});
   }
 }
