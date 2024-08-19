@@ -24,7 +24,7 @@ model User {
   id          String   @id @default(cuid()) @map("_id")
   name        String
   email       String   @unique
-  phoneNumber Float?
+  phoneNumber Float    @unique
   address     String?
   password    String
   avatar      Avatars?

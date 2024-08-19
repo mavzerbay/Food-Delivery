@@ -8,7 +8,6 @@ import { Response } from 'express';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from './email/email.service';
 import { TokenSender } from './utils/send_token';
-import { User } from '@prisma/client';
 
 interface UserData {
   name: string;
@@ -160,6 +159,25 @@ export class UsersService {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
+  // get logged in user
+  async getLoggedInUser(req: any) {
+    const user = req.user;
+    const refreshToken = req.headers.refreshtoken;
+    const accessToken = req.headers.accesstoken;
+
+    console.log({ user, refreshToken, accessToken });
+    return { user, refreshToken, accessToken };
+  }
+
+  // logout user
+  async logout(req: any) {
+    req.user = null;
+    req.headers.accesstoken = null;
+    req.headers.refreshtoken = null;
+    return { message: 'Logged out successfully!' };
+  }
+
+  // get all users
   async getUsers() {
     return this.prisma.user.findMany({});
   }
